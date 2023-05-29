@@ -30,6 +30,9 @@
        buffer)]
     [else null]))
 
+(define (var name value)
+  (format "~a = ~a" name value))
+
 (define (main)
   (step! rule 'foo (hash 'foo "bar" 'command "cowsay"))
   (display ninja-output))
