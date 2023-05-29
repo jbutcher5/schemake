@@ -4,7 +4,12 @@
 (define ninja-status 0)
 
 (define-syntax-rule (append-ln! buf str)
-  (set! buf (string-append buf "\n" str)))
+  (if (buf . equal? . "")
+      (set! buf str)
+      (set! buf (string-append buf "\n" str))))
+
+(define-syntax-rule (format-append-ln! buf str ...)
+  (append-ln! buf (format str ...)))
 
 (define-syntax-rule (step! a ...)
   (when (ninja-status . = . 0)
@@ -19,9 +24,9 @@
     [(hash-has-key? vars 'command)
      (begin
        (define buffer "")
-       (append-ln! buffer (format "rule ~a" name))
+       (format-append-ln! buffer "rule ~a" name)
        (for ([(key val) vars])
-         (append-ln! buffer (format "  ~a = ~a" key val)))
+         (format-append-ln! buffer "  ~a = ~a" key val))
        buffer)]
     [else null]))
 
