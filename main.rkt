@@ -11,6 +11,16 @@
 (define-syntax-rule (format-append-ln! buf str ...)
   (append-ln! buf (format str ...)))
 
+(define (list->string l)
+  (match (count (lambda (_) #t) l)
+    [0 ""]
+    [_ (foldl (lambda (x xs) (format "~a ~a" xs x)) (format "~a" (car l)) (cdr l))]))
+
+(define (parse-vars vars)
+  (if (hash-has-key? vars 'command)
+      (hash-set vars 'command (list->string (hash-ref vars 'command)))
+      vars))
+
 (define-syntax-rule (step! a ...)
   (when (ninja-status . = . 0)
     (define x (a ...))
@@ -20,6 +30,8 @@
         (append-ln! ninja-output x))))
 
 (define (rule name vars)
+  (set! vars (parse-vars vars))
+
   (cond
     [(hash-has-key? vars 'command)
      (begin
@@ -34,7 +46,7 @@
   (format "~a = ~a" name value))
 
 (define (main)
-  (step! rule 'foo (hash 'foo "bar" 'command "cowsay"))
+  (step! rule 'foo (hash 'foo "bar" 'command '(gcc -Wall)))
   (display ninja-output))
 
 (main)
