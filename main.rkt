@@ -16,10 +16,17 @@
     [0 ""]
     [_ (foldl (lambda (x xs) (format "~a ~a" xs x)) (format "~a" (car l)) (cdr l))]))
 
+(define (cmd->string c)
+  (cond
+    [(string? c) c]
+    [(symbol? c) (format "~a" c)]
+    [else (list->string c)]
+    ))
+
 (define (parse-vars vars)
-  (if (hash-has-key? vars 'command)
-      (hash-set vars 'command (list->string (hash-ref vars 'command)))
-      vars))
+  (hash-map/copy
+   vars
+   (lambda (k v) (values k (cmd->string v)))))
 
 (define-syntax-rule (step! a ...)
   (when (ninja-status . = . 0)
@@ -49,16 +56,19 @@
 
 (define-syntax (build stx)
   (syntax-case stx ()
-    [(_ input output) #'(format "build ~a = ~a" input output)]
+    [(_ input output) #'(format "build ~a = ~a" (cmd->string input) (cmd->string output))]
     [(_ input output vars)
-     #'(begin (define buffer (build input output))
+     #'(begin (define input (cmd->string input))
+              (define output (cmd->string output))
+              (define var (parse-vars var))
+              (define buffer (build input output))
               (for ([(key val) vars])
                 (format-append-ln! buffer "  ~a = ~a" key val)))]))
 
 (define (main)
   (step! rule 'cc (hash 'command '(gcc $in -o $out)))
-  (step! build "*.c" "cc *.o")
-  (step! rule 'foo (hash 'foo "bar" 'command '(gcc -Wall)))
+  (step! build '*.c '(cc *.o))
+  (step! rule 'foo (hash 'foo 'bar 'command '(gcc -Wall)))
   (display ninja-output))
 
 (main)
