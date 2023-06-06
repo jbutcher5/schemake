@@ -43,9 +43,21 @@
     [else null]))
 
 (define (var name value)
-  (format "~a = ~a" name value))
+  (if (or (null? name) (null? value))
+      null
+      (format "~a = ~a" name value)))
+
+(define-syntax (build stx)
+  (syntax-case stx ()
+    [(_ input output) #'(format "build ~a = ~a" input output)]
+    [(_ input output vars)
+     #'(begin (define buffer (build input output))
+              (for ([(key val) vars])
+                (format-append-ln! buffer "  ~a = ~a" key val)))]))
 
 (define (main)
+  (step! rule 'cc (hash 'command '(gcc $in -o $out)))
+  (step! build "*.c" "cc *.o")
   (step! rule 'foo (hash 'foo "bar" 'command '(gcc -Wall)))
   (display ninja-output))
 
