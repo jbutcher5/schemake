@@ -56,19 +56,21 @@
 
 (define-syntax (build stx)
   (syntax-case stx ()
-    [(_ input output) #'(format "build ~a = ~a" (cmd->string input) (cmd->string output))]
+    [(_ input output) #'(format "build ~a: ~a" (cmd->string input) (cmd->string output))]
     [(_ input output vars)
      #'(begin (define input (cmd->string input))
               (define output (cmd->string output))
               (define var (parse-vars var))
               (define buffer (build input output))
               (for ([(key val) vars])
-                (format-append-ln! buffer "  ~a = ~a" key val)))]))
+                (format-append-ln! buffer "  ~a: ~a" key val)))]))
 
 (define (main)
-  (step! rule 'cc (hash 'command '(gcc $in -o $out)))
-  (step! build '*.c '(cc *.o))
-  (step! rule 'foo (hash 'foo 'bar 'command '(gcc -Wall)))
+  (step! var 'exe 'foo)
+  (step! rule 'cc (hash 'command '(gcc -c $in -o $out)))
+  (step! rule 'link (hash 'command '(gcc $in -o $exe)))
+  (step! build 'foo.c '(cc foo.o))
+
   (display ninja-output))
 
 (main)
