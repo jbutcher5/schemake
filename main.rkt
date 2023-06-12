@@ -19,7 +19,7 @@
   (set! PROJECT name)
   (set! LANGUAGE lang))
 
-(define (new-target name src (lang null))
+(define (new-target! name src (lang null))
   (define language LANGUAGE)
   (when (not (null? lang))
     (set! language lang))
@@ -48,7 +48,7 @@
 (define (main)
   (require-minimum-version 0.0)
   (project! "Schemake Test" 'c)
-  (new-target "foo" '("foo.c") 'c)
+  (new-target! "foo" '("foo.c") 'c)
 
   (display RULES)
   (display BUILDS))
