@@ -52,6 +52,17 @@
           (set-add! BUILDS (build name 'link obj-str)))]
     ['() (raise "No language has been specified" #t)]))
 
+(define (write-ninja! (file-name "build.ninja"))
+  (define f (open-output-file file-name #:exists 'update))
+
+  (for ([rule RULES])
+    (display (rule->string rule) f))
+
+  (for ([build BUILDS])
+    (display (build->string build) f))
+
+  (close-output-port f))
+
 (define (main)
   (require-minimum-version 0.0)
   (project! "Schemake Test" 'c)
