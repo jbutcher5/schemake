@@ -62,7 +62,7 @@
   (set-union! BUILDS (cdr rule-build-p)))
 
 (define (write-ninja! (file-name "build.ninja"))
-  (define f (open-output-file file-name #:exists 'update))
+  (define f (open-output-file file-name #:exists 'append))
 
   (for ([rule RULES])
     (display (rule->string rule) f))
