@@ -11,6 +11,9 @@
 (struct rule (name command))
 (struct build (target rule in))
 
+(define-syntax-rule (map-apply f l)
+  (map (lambda (x) (apply f x)) l))
+
 (define (rule->string r)
   (match r
     [(rule name command) (format "rule ~a\n  command = ~a\n" name command)]))
