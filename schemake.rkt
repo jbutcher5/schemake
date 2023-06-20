@@ -1,4 +1,5 @@
 #lang racket
+(require compatibility/mlist)
 (provide (struct-out rule) (struct-out build) require-minimum-version project! new-target! write-ninja!)
 
 (define VERSION 0.0)
@@ -14,6 +15,9 @@
 (define-syntax-rule (map-apply f l)
   (map (lambda (x) (apply f x)) l))
 
+(define-syntax-rule (partial-apply f a ... l)
+  (apply f (append (list a ...) l)))
+
 (define (rule->string r)
   (match r
     [(rule name command) (format "rule ~a\n  command = ~a\n" name command)]))
@@ -26,9 +30,13 @@
   (when (VERSION . < . ver)
     (raise (format "The current version is too low try a version >=~a" ver) #t)))
 
-(define (c-template name src)
-  (let ([rules (list->set (map-apply rule '((cc "gcc -c $in -o $out")
-                                            (link "gcc $in -o $out"))))]
+(define (c-template name src (cc 'gcc))
+
+  (define c (format "~a -c $in -o $out" cc))
+  (define l (format "~a $in -o $out" cc))
+
+  (let ([rules (list->set (map-apply rule `((cc ,c)
+                                            (link ,l))))]
         [builds (mutable-set)])
 
     (define obj '())
@@ -50,14 +58,14 @@
   (set! PROJECT name)
   (set! LANGUAGE lang))
 
-(define (new-target! name src #:lang (lang null) #:template (t null))
+(define (new-target! name src (args (mlist)) #:lang (lang null) #:template (t null))
   (define language LANGUAGE)
   (when (not (null? lang))
     (set! language lang))
 
   (define rule-build-p (if (null? t)
                            (match language
-                             ['c (c-template name src)]
+                             ['c (partial-apply c-template name src (mlist->list args))]
                              ['() (raise "No language has been specified" #t)])
                            (t name src)))
 
